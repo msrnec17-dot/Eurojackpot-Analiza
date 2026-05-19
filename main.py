@@ -1,7 +1,4 @@
 import os
-os.makedirs('output', exist_ok=True)
-
-main_code = r'''import os
 import math
 import requests
 import pandas as pd
@@ -358,61 +355,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-'''
-
-workflow_code = r'''name: Eurojackpot Pro Bot
-
-on:
-  schedule:
-    - cron: '0 10 * * 2,5'
-    - cron: '0 20 * * 2,5'
-  workflow_dispatch:
-    inputs:
-      mode:
-        description: 'PREDICTION ili EVALUATION'
-        required: true
-        default: 'PREDICTION'
-        type: choice
-        options:
-          - PREDICTION
-          - EVALUATION
-
-jobs:
-  run-bot:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install deps
-        run: |
-          python -m pip install --upgrade pip
-          pip install pandas requests beautifulsoup4 lxml html5lib
-
-      - name: Decide mode and run
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            export MODE="${{ github.event.inputs.mode }}"
-          else
-            HOUR=$(date -u +%H)
-            if [ "$HOUR" -eq "10" ]; then
-              export MODE="PREDICTION"
-            else
-              export MODE="EVALUATION"
-            fi
-          fi
-          python main.py
-'''
-
-with open('output/main.py', 'w', encoding='utf-8') as f:
-    f.write(main_code)
-with open('output/eurojackpot_pro_bot.yml', 'w', encoding='utf-8') as f:
-    f.write(workflow_code)
