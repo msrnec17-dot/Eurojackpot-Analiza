@@ -1,0 +1,51 @@
+name: Eurojackpot Bot
+
+on:
+  schedule:
+    # 10:00 UTC = 12:00 po HR vremenu - Predikcija (utorak i petak)
+    - cron: '0 10 * * 2,5'
+    # 20:00 UTC = 22:00 po HR vremenu - Evaluacija (utorak i petak)
+    - cron: '0 20 * * 2,5'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Odaberi mod rada (PREDICTION ili EVALUATION)'
+        required: true
+        default: 'PREDICTION'
+        type: choice
+        options:
+          - PREDICTION
+          - EVALUATION
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Preuzimanje koda
+        uses: actions/checkout@v3
+
+      - name: Postavljanje Pythona
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Instalacija biblioteka
+        run: pip install pandas requests beautifulsoup4 lxml html5lib
+
+      - name: Određivanje Moda i Pokretanje
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            export MODE="${{ github.event.inputs.mode }}"
+          else
+            HOUR=$(date -u +%H)
+            if [ "$HOUR" -eq "10" ]; then
+              export MODE="PREDICTION"
+            else
+              export MODE="EVALUATION"
+            fi
+          fi
+          echo "Pokrećem skriptu u modu: $MODE"
+          python main.py
