@@ -1,15 +1,13 @@
-name: Eurojackpot Bot
+name: Eurojackpot Pro Bot
 
 on:
   schedule:
-    # 10:00 UTC = 12:00 po HR vremenu - Predikcija (utorak i petak)
     - cron: '0 10 * * 2,5'
-    # 20:00 UTC = 22:00 po HR vremenu - Evaluacija (utorak i petak)
     - cron: '0 20 * * 2,5'
   workflow_dispatch:
     inputs:
       mode:
-        description: 'Odaberi mod rada (PREDICTION ili EVALUATION)'
+        description: 'PREDICTION ili EVALUATION'
         required: true
         default: 'PREDICTION'
         type: choice
@@ -21,18 +19,20 @@ jobs:
   run-bot:
     runs-on: ubuntu-latest
     steps:
-      - name: Preuzimanje koda
-        uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Postavljanje Pythona
-        uses: actions/setup-python@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.11'
 
-      - name: Instalacija biblioteka
-        run: pip install pandas requests beautifulsoup4 lxml html5lib
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas requests beautifulsoup4 lxml html5lib
 
-      - name: Određivanje Moda i Pokretanje
+      - name: Decide mode and run
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -47,5 +47,4 @@ jobs:
               export MODE="EVALUATION"
             fi
           fi
-          echo "Pokrećem skriptu u modu: $MODE"
           python main.py
